@@ -1598,6 +1598,64 @@ body.portfolio-body {
   max-width: 40rem;
 }
 
+/* ——— Coming Soon mask overlay ——— */
+.mask {
+  position: relative;
+}
+
+.mask .cf-card {
+  filter: blur(4px);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mask::after {
+  content: 'Coming Soon';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  background: linear-gradient(
+    90deg,
+    #a855f7 0%,
+    #d8b4fe 35%,
+    #ffffff 50%,
+    #d8b4fe 65%,
+    #a855f7 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: cs-shimmer 3s linear infinite, cs-float 4s ease-in-out infinite;
+  z-index: 10;
+  text-shadow: none;
+  pointer-events: none;
+}
+
+@keyframes cs-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+@keyframes cs-float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mask::after {
+    animation: none;
+    background-position: 0 center;
+  }
+}
+
+/* ——— Footer ——— */
 .pf-footer {
   background-color: var(--pf-bg);
   border-color: rgba(255, 255, 255, 0.08) !important;
@@ -1606,6 +1664,43 @@ body.portfolio-body {
 .pf-footer-text {
   color: var(--pf-subtle);
   font-size: 0.8125rem;
+}
+
+.pf-social-links {
+  display: flex;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.pf-social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--pf-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  text-decoration: none;
+}
+
+.pf-social-link svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.pf-social-link:hover,
+.pf-social-link:focus-visible {
+  color: var(--pf-accent);
+  border-color: var(--pf-accent);
+  background-color: rgba(168, 85, 247, 0.1);
+}
+
+.pf-social-link:focus-visible {
+  outline: 2px solid var(--pf-accent);
+  outline-offset: 3px;
 }
 
 /* ——— Tech constellation (reference) ——— */
@@ -2253,3 +2348,4 @@ body.portfolio-body {
   height: 13px;
   flex-shrink: 0;
 }
+
