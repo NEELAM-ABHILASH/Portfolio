@@ -4,7 +4,7 @@
 
 [[redirects]]
   from = "/api/*"
-  to = "https://portfolio-pd61.onrender.com"  # <-- replace with your Render URL after Step 2
+  to = "https://portfolio-pd61.onrender.com/api/:splat"
   status = 200
   force = true
 
