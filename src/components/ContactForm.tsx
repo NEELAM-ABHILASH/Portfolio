@@ -137,7 +137,7 @@ export function ContactForm() {
     setServerMessage("");
 
     try {
-      const res = await fetch("/api/form", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL ?? ""}/api/form`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -472,7 +472,7 @@ export function ContactForm() {
         </div>
       </div>
 
-      <div className="pf-container mask">
+      <div className="pf-container">
         <div className="cf-card">
           {/* — Section header — */}
           <div className="cf-header">
