@@ -1,6 +1,11 @@
+import { useState } from 'react'
 import { SignatureLogo } from './SignatureLogo'
 
 export function Header() {
+  const [isNavOpen, setIsNavOpen] = useState(false)
+
+  const closeNav = () => setIsNavOpen(false)
+
   return (
     <header className="navbar navbar-expand-md navbar-dark pf-header">
       <div className="pf-container pf-header-inner">
@@ -9,28 +14,30 @@ export function Header() {
           <button
             className="navbar-toggler pf-navbar-toggler"
             type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#mainNav"
             aria-controls="mainNav"
-            aria-expanded="false"
+            aria-expanded={isNavOpen}
             aria-label="Toggle navigation"
+            onClick={() => setIsNavOpen((prev) => !prev)}
           >
             <span className="navbar-toggler-icon pf-navbar-toggler-icon" />
           </button>
-          <nav className="collapse navbar-collapse justify-content-lg-end" id="mainNav">
+          <nav
+            className={`collapse navbar-collapse justify-content-lg-end${isNavOpen ? ' show' : ''}`}
+            id="mainNav"
+          >
             <ul className="navbar-nav gap-lg-4 mt-3 mt-lg-0 align-items-lg-center ms-lg-auto text-center text-lg-end">
               <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#home">
+                <a className="nav-link pf-nav-link" href="#home" onClick={closeNav}>
                   Home
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#about">
+                <a className="nav-link pf-nav-link" href="#about" onClick={closeNav}>
                   About
                 </a>
               </li>
               <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#contact">
+                <a className="nav-link pf-nav-link" href="#contact" onClick={closeNav}>
                   Connect
                 </a>
               </li>

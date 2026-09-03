@@ -24,6 +24,11 @@ html {
   scroll-behavior: smooth;
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body.portfolio-body {
   min-height: 100vh;
   margin: 0;
@@ -92,6 +97,29 @@ body.portfolio-body {
 
 .pf-header-rule {
   border-bottom: 1px solid var(--pf-header-line);
+}
+
+/* Mobile nav: header is fixed, so the expanded menu must overlay as a
+   dropdown instead of growing the header in place (which pushed it on
+   top of the hero content below). */
+@media (max-width: 767.98px) {
+  .pf-header-inner {
+    position: relative;
+  }
+
+  #mainNav.navbar-collapse {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1031;
+    margin-top: 0.75rem;
+    padding: 1rem 1.25rem 1.25rem;
+    background-color: var(--pf-bg);
+    border: 1px solid var(--pf-header-line);
+    border-radius: 12px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .signature-brand {
