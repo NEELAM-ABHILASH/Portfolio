@@ -32,11 +32,12 @@ type VortexMode = "warp" | "converge" | "focus" | "burst";
  *  burst    — it blows outward over the page as the loader opens.
  * Trails fade to transparent, so the burst stays visible over the revealed site.
  */
-function startVortex(canvas: HTMLCanvasElement, count: number) {
+function startVortex(canvas: HTMLCanvasElement, count: number, lite = false) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return { setMode: (m: VortexMode) => void m, stop: () => {} };
-  // 1.5x is visually indistinguishable for soft particles and much cheaper to clear each frame
-  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  // Soft particles don't need full retina resolution; a smaller backing store
+  // is much cheaper to clear and redraw every frame (phones: 1.25x).
+  const dpr = Math.min(window.devicePixelRatio || 1, lite ? 1.25 : 1.5);
   let w = 0;
   let h = 0;
   let coreY = 0.5; // vertical centre of the composition (CSS --core-y)
@@ -120,9 +121,14 @@ function startVortex(canvas: HTMLCanvasElement, count: number) {
       } else {
         ctx.globalAlpha = alpha;
         ctx.fillStyle = p.c;
-        ctx.beginPath();
-        ctx.arc(x, y, size, 0, TAU);
-        ctx.fill();
+        if (lite) {
+          // squares are far cheaper than arcs and look the same at this size
+          ctx.fillRect(x - size, y - size, size * 2, size * 2);
+        } else {
+          ctx.beginPath();
+          ctx.arc(x, y, size, 0, TAU);
+          ctx.fill();
+        }
       }
       p.px = x;
       p.py = y;
@@ -194,8 +200,15 @@ export function Preloader() {
     const rings = el.querySelectorAll<HTMLElement>(".pre-ring");
     const hudArcs = el.querySelectorAll<SVGCircleElement>(".pre-hud-progress, .pre-hud-glow");
     const tier = getDeviceTier();
+    // Phones / touch tablets: same choreography, lighter rendering — no
+    // filter-based effects (blur / drop-shadow are the most expensive things a
+    // mobile GPU can be asked to animate), no full-screen white flashes or
+    // flare (they read as the screen "blinking"), fewer and cheaper particles,
+    // and tighter distances so nothing flies far off a narrow screen.
+    const compact = window.matchMedia("(max-width: 767.98px), (pointer: coarse)").matches;
+    const spread = compact ? 0.55 : 1;
     const vortex = canvas
-      ? startVortex(canvas, tier === "high" ? 700 : tier === "mid" ? 420 : 220)
+      ? startVortex(canvas, compact ? 260 : tier === "high" ? 700 : tier === "mid" ? 420 : 220, compact)
       : { setMode: () => {}, stop: () => {} };
     let stopDecode = () => {};
 
@@ -206,12 +219,6 @@ export function Preloader() {
       hudArcs.forEach((arc) => (arc.style.strokeDashoffset = String(100 - counter.v)));
       if (label) label.textContent = STAGES[v >= 100 ? 3 : v >= 62 ? 2 : v >= 30 ? 1 : 0];
     };
-
-    // Phones: same choreography, but no filter-based effects (blur / drop-shadow
-    // are the most expensive things a mobile GPU can be asked to animate) and
-    // tighter distances so nothing flies far off a narrow screen.
-    const compact = window.matchMedia("(max-width: 767.98px)").matches;
-    const spread = compact ? 0.55 : 1;
 
     // RGB-split glitch burst on the name (transform-only jitter on phones)
     const glitch = compact

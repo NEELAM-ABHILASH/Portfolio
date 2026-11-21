@@ -44,9 +44,8 @@ html.lenis,
 html.lenis body {
   height: auto;
 }
-.lenis.lenis-stopped {
-  overflow: clip;
-}
+/* (no overflow rule for .lenis-stopped: pausing smooth scroll must not change
+   <html> overflow — see pauseScroll() in lib/motion.ts) */
 .lenis.lenis-smooth [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
@@ -754,6 +753,23 @@ section[id] {
   }
 }
 
+/*
+ * Phones and touch tablets: no full-screen white flash, lens flare or scan
+ * line — on a small screen those read as the display blinking — and a softer
+ * shockwave. (Same media query as `compact` in Preloader.tsx.)
+ */
+@media (max-width: 767.98px), (pointer: coarse) {
+  .pre-flash,
+  .pre-flare,
+  .pre-scan {
+    display: none;
+  }
+  .pre-shock {
+    border-color: rgba(216, 180, 254, 0.45);
+    box-shadow: 0 0 24px rgba(168, 85, 247, 0.35);
+  }
+}
+
 /* Short landscape phones: same text-free treatment, sized to the short side */
 @media (orientation: landscape) and (max-height: 500px) {
   .preloader {
@@ -1025,19 +1041,31 @@ section[id] {
   padding: calc(var(--pf-header-h) + 1.25rem) var(--pf-gutter) max(1.5rem, env(safe-area-inset-bottom));
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Solid panel — no backdrop-filter: a live blur over the page (and the WebGL
+     canvas) is what made the background flicker on phones while it opened. */
   background:
     radial-gradient(90% 50% at 100% 0%, rgba(168, 85, 247, 0.16), transparent 60%),
     radial-gradient(80% 40% at 0% 100%, rgba(59, 130, 246, 0.12), transparent 60%),
-    rgba(6, 4, 14, 0.96);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  clip-path: circle(0% at calc(100% - 2.6rem) 2.4rem);
-  transition: clip-path 0.8s var(--ease-out);
+    #06040e;
+  /* Opens with opacity + transform only (composited, no per-frame repaint).
+     Visibility flips at the end of closing so the panel can't be tabbed into. */
+  opacity: 0;
+  transform: translateY(-12px) scale(0.985);
+  transform-origin: 50% 0;
   visibility: hidden;
+  transition:
+    opacity 0.32s ease,
+    transform 0.45s var(--ease-out),
+    visibility 0s linear 0.45s;
 }
 .mobile-menu.is-open {
-  clip-path: circle(150% at calc(100% - 2.6rem) 2.4rem);
+  opacity: 1;
+  transform: none;
   visibility: visible;
+  transition:
+    opacity 0.32s ease,
+    transform 0.45s var(--ease-out),
+    visibility 0s;
 }
 .mm-nav,
 .mm-foot {
@@ -1912,30 +1940,6 @@ section[id] {
   border-left: 0;
   border-top: 0;
   border-bottom-right-radius: 10px;
-}
-.avatar-caption {
-  position: absolute;
-  left: 34px;
-  right: 34px;
-  bottom: 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  text-align: left;
-}
-.avatar-caption-name {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1.2rem;
-  letter-spacing: -0.01em;
-  color: #fff;
-}
-.avatar-caption-role {
-  font-family: var(--font-mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--pf-cyan);
 }
 
 /* Orbit rings lie in a tilted plane that cuts through the photo:

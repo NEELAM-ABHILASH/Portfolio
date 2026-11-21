@@ -259,23 +259,37 @@ export default function ParticleScene() {
     window.addEventListener("pointermove", onPointer, { passive: true });
 
     /* ── Resize ── */
+    // Mobile browsers fire resize whenever the address bar slides in/out (a
+    // height-only change of ~50–120px). Resizing the canvas clears it, which
+    // shows up as a flash — so ignore those, and redraw immediately otherwise.
     let resizeT = 0;
+    let sizedW = window.innerWidth;
+    let sizedH = window.innerHeight;
     const onResize = () => {
       window.clearTimeout(resizeT);
       resizeT = window.setTimeout(() => {
-        camera.aspect = window.innerWidth / window.innerHeight;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        if (w === sizedW && Math.abs(h - sizedH) < 160) return;
+        sizedW = w;
+        sizedH = h;
+        camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(w, h);
         measure();
+        renderer.render(scene, camera);
       }, 120);
     };
     window.addEventListener("resize", onResize);
 
     /* ── Intro ── */
+    let introStarted = false;
     const offIntro = onIntro(() => {
+      introStarted = true;
       gsap.to(uniforms.uIntro, { value: 1, duration: 0.9, ease: "power4.out" });
       gsap.to(uniforms.uIntro, { value: 2, duration: 2.4, ease: "power2.inOut", delay: 0.55 });
     });
+    const root = document.documentElement;
 
     /* ── Loop ── */
     let pairA = -1;
@@ -293,6 +307,13 @@ export default function ParticleScene() {
 
     const render = () => {
       if (lost) return;
+      // Nothing to show yet (still behind the preloader) or fully covered by
+      // the open mobile menu: skip the GPU work so those stay smooth.
+      // The last drawn frame stays on screen.
+      if (!first && (!introStarted || root.classList.contains("menu-open"))) {
+        timer.update();
+        return;
+      }
       timer.update();
       const dt = Math.min(timer.getDelta(), 0.05);
       const time = timer.getElapsed();

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
 import { profile, sections, socials } from "../data/portfolio";
-import { gsap, prefersReducedMotion, REDUCED, scrollToHash, setMotionOverride, stopScroll } from "../lib/motion";
+import { gsap, pauseScroll, prefersReducedMotion, REDUCED, scrollToHash, setMotionOverride } from "../lib/motion";
 
 function MotionToggle() {
   return (
@@ -90,10 +90,23 @@ export function Header() {
     const menu = menuRef.current;
     if (!menu) return;
     if (!isNavOpen) return;
-    stopScroll(true);
-    // Keep keyboard focus inside the open menu.
+    const root = document.documentElement;
+    // Pauses the WebGL backdrop (it's fully covered) — see ParticleScene.
+    root.classList.add("menu-open");
+    // Lock scrolling WITHOUT toggling overflow on <html>: on phones that can
+    // make the address bar re-appear, resizing the viewport and re-laying out
+    // the page behind the menu (seen as the background "blinking").
+    pauseScroll(true);
+    const menuScrollable = () => menu.scrollHeight > menu.clientHeight + 1;
+    const blockScroll = (e: Event) => {
+      if (!menuScrollable()) e.preventDefault();
+    };
+    menu.addEventListener("touchmove", blockScroll, { passive: false });
+    menu.addEventListener("wheel", blockScroll, { passive: false });
+    // Keep keyboard focus inside the open menu — applied after the first
+    // animation frame so the style recalc doesn't delay the opening.
     const behind = document.querySelectorAll<HTMLElement>(".pf-main, .ft, .site-nav");
-    behind.forEach((el) => (el.inert = true));
+    const inertRaf = requestAnimationFrame(() => behind.forEach((el) => (el.inert = true)));
     const links = menu.querySelectorAll<HTMLElement>(".mm-link");
     const reduce = prefersReducedMotion();
     const ctx = gsap.context(() => {
@@ -116,9 +129,13 @@ export function Header() {
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
+      menu.removeEventListener("touchmove", blockScroll);
+      menu.removeEventListener("wheel", blockScroll);
+      cancelAnimationFrame(inertRaf);
       behind.forEach((el) => (el.inert = false));
+      root.classList.remove("menu-open");
       ctx.revert();
-      stopScroll(false);
+      pauseScroll(false);
     };
   }, [isNavOpen]);
 

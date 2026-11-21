@@ -34,12 +34,6 @@ export function ProfileAvatar() {
           <i />
           <i />
         </span>
-        <span className="avatar-caption" aria-hidden="true">
-          <span className="avatar-caption-name">
-            {profile.firstName} {profile.lastName}
-          </span>
-          <span className="avatar-caption-role">{profile.role}</span>
-        </span>
       </div>
 
       <div className="avatar-orbit avatar-orbit--a" aria-hidden="true">

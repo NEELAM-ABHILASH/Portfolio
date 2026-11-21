@@ -4,6 +4,9 @@ import Lenis from "lenis";
 
 gsap.registerPlugin(ScrollTrigger);
 gsap.defaults({ ease: "power3.out", duration: 1 });
+// Phones resize the viewport whenever the address bar slides in/out; don't
+// recalculate every trigger/pin for that (it shows as content jumping).
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 export { gsap, ScrollTrigger };
 
@@ -108,6 +111,17 @@ export function initSmoothScroll(): () => void {
   };
 }
 
+/**
+ * Pause/resume smooth scrolling only — no overflow change on <html>. Used by
+ * the mobile menu, which blocks touch/wheel scrolling itself.
+ */
+export function pauseScroll(pause: boolean) {
+  if (!lenis) return;
+  if (pause) lenis.stop();
+  else lenis.start();
+}
+
+/** Hard scroll lock (preloader): pauses Lenis and hides overflow on <html>. */
 export function stopScroll(stop: boolean) {
   if (lenis) {
     if (stop) lenis.stop();
