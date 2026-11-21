@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 
-const OBS_OPTIONS: IntersectionObserverInit = {
+const DEFAULT_OPTIONS: IntersectionObserverInit = {
   root: null,
   threshold: 0.12,
   rootMargin: '0px 0px -8% 0px',
 }
 
-export function useInViewOnce<T extends HTMLElement>() {
+export function useInViewOnce<T extends HTMLElement>(
+  options?: IntersectionObserverInit,
+) {
   const ref = useRef<T | null>(null)
   const [visible, setVisible] = useState(false)
 
@@ -15,10 +17,10 @@ export function useInViewOnce<T extends HTMLElement>() {
     if (!el) return
     const obs = new IntersectionObserver(([entry]) => {
       if (entry.isIntersecting) setVisible(true)
-    }, OBS_OPTIONS)
+    }, options ?? DEFAULT_OPTIONS)
     obs.observe(el)
     return () => obs.disconnect()
-  }, [])
+  }, [options])
 
   return { ref, visible }
 }

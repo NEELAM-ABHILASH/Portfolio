@@ -1,50 +1,229 @@
-import { useState } from 'react'
-import { SignatureLogo } from './SignatureLogo'
+import { useEffect, useLayoutEffect, useRef, useState, type MouseEvent } from "react";
+import { profile, sections, socials } from "../data/portfolio";
+import { gsap, prefersReducedMotion, REDUCED, scrollToHash, setMotionOverride, stopScroll } from "../lib/motion";
+
+function MotionToggle() {
+  return (
+    <button
+      type="button"
+      className={`motion-toggle${REDUCED ? "" : " is-on"}`}
+      aria-pressed={!REDUCED}
+      title={REDUCED ? "Turn 3D animations on" : "Turn 3D animations off"}
+      onClick={() => setMotionOverride(REDUCED ? "on" : "off")}
+    >
+      <span className="motion-toggle-track" aria-hidden="true">
+        <span className="motion-toggle-knob" />
+      </span>
+      <span className="motion-toggle-label">3D</span>
+    </button>
+  );
+}
+import { SignatureLogo } from "./SignatureLogo";
+
+const NAV = sections.filter((s) => s.id !== "home");
 
 export function Header() {
-  const [isNavOpen, setIsNavOpen] = useState(false)
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const [active, setActive] = useState<string>("home");
+  const headerRef = useRef<HTMLElement | null>(null);
+  const progressRef = useRef<HTMLSpanElement | null>(null);
+  const pillRef = useRef<HTMLSpanElement | null>(null);
+  const navRef = useRef<HTMLUListElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+  const toggleRef = useRef<HTMLButtonElement | null>(null);
 
-  const closeNav = () => setIsNavOpen(false)
+  // Scroll state: progress bar, glass background once scrolled, active section.
+  // The header itself stays fixed and visible at all times.
+  useEffect(() => {
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+      }
+      headerRef.current?.classList.toggle("is-scrolled", y > 30);
+      const mid = window.innerHeight * 0.45;
+      let current: string = sections[0].id;
+      for (const s of sections) {
+        const el = document.getElementById(s.id);
+        if (el && el.getBoundingClientRect().top <= mid) current = s.id;
+      }
+      setActive((prev) => (prev === current ? prev : current));
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  // Slide the active pill under the current link.
+  useLayoutEffect(() => {
+    const pill = pillRef.current;
+    const nav = navRef.current;
+    if (!pill || !nav) return;
+    const place = () => {
+      const link = nav.querySelector<HTMLElement>(`a[href="#${active}"]`);
+      if (!link) {
+        pill.style.opacity = "0";
+        return;
+      }
+      pill.style.opacity = "1";
+      pill.style.width = `${link.offsetWidth}px`;
+      pill.style.transform = `translateX(${link.offsetLeft}px)`;
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [active]);
+
+  // Mobile menu open/close choreography.
+  useEffect(() => {
+    const menu = menuRef.current;
+    if (!menu) return;
+    if (!isNavOpen) return;
+    stopScroll(true);
+    // Keep keyboard focus inside the open menu.
+    const behind = document.querySelectorAll<HTMLElement>(".pf-main, .ft, .site-nav");
+    behind.forEach((el) => (el.inert = true));
+    const links = menu.querySelectorAll<HTMLElement>(".mm-link");
+    const reduce = prefersReducedMotion();
+    const ctx = gsap.context(() => {
+      if (!reduce) {
+        gsap.fromTo(
+          links,
+          { rotationX: -90, y: 60, opacity: 0, transformOrigin: "50% 100%" },
+          { rotationX: 0, y: 0, opacity: 1, duration: 0.8, ease: "expo.out", stagger: 0.06, delay: 0.15 },
+        );
+        gsap.fromTo(".mm-foot", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, delay: 0.5 });
+      }
+    }, menu);
+    links[0]?.focus({ preventScroll: true });
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsNavOpen(false);
+        toggleRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      behind.forEach((el) => (el.inert = false));
+      ctx.revert();
+      stopScroll(false);
+    };
+  }, [isNavOpen]);
+
+  const go = (e: MouseEvent<HTMLAnchorElement>, hash: string) => {
+    e.preventDefault();
+    setIsNavOpen(false);
+    // let the menu release scroll before travelling
+    requestAnimationFrame(() => scrollToHash(hash));
+  };
 
   return (
-    <header className="navbar navbar-expand-md navbar-dark pf-header">
-      <div className="pf-container pf-header-inner">
-        <div className="d-flex flex-wrap align-items-center justify-content-between w-100 pb-3 pb-lg-4 pf-header-rule">
-          <SignatureLogo />
-          <button
-            className="navbar-toggler pf-navbar-toggler"
-            type="button"
-            aria-controls="mainNav"
-            aria-expanded={isNavOpen}
-            aria-label="Toggle navigation"
-            onClick={() => setIsNavOpen((prev) => !prev)}
-          >
-            <span className="navbar-toggler-icon pf-navbar-toggler-icon" />
-          </button>
-          <nav
-            className={`collapse navbar-collapse justify-content-lg-end${isNavOpen ? ' show' : ''}`}
-            id="mainNav"
-          >
-            <ul className="navbar-nav gap-lg-4 mt-3 mt-lg-0 align-items-lg-center ms-lg-auto text-center text-lg-end">
-              <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#home" onClick={closeNav}>
-                  Home
+    <header ref={headerRef} className="site-header">
+      <span className="site-progress" aria-hidden="true">
+        <span ref={progressRef} />
+      </span>
+      <div className="pf-container site-header-inner">
+        <SignatureLogo onClick={(e) => go(e, "#home")} />
+
+        <nav className="site-nav" aria-label="Primary">
+          <span ref={pillRef} className="site-nav-pill" aria-hidden="true" />
+          <ul ref={navRef}>
+            {NAV.map((s) => (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  className={`site-nav-link${active === s.id ? " is-active" : ""}`}
+                  aria-current={active === s.id ? "location" : undefined}
+                  onClick={(e) => go(e, `#${s.id}`)}
+                >
+                  {s.label}
                 </a>
               </li>
-              <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#about" onClick={closeNav}>
-                  About
+            ))}
+          </ul>
+        </nav>
+
+        <div className="site-header-tools">
+        <MotionToggle />
+        <button
+          ref={toggleRef}
+          className={`menu-toggle${isNavOpen ? " is-open" : ""}`}
+          type="button"
+          aria-controls="mobileMenu"
+          aria-expanded={isNavOpen}
+          aria-label={isNavOpen ? "Close navigation" : "Open navigation"}
+          onClick={() => setIsNavOpen((prev) => !prev)}
+        >
+          <span />
+          <span />
+        </button>
+        </div>
+      </div>
+
+      <div
+        id="mobileMenu"
+        ref={menuRef}
+        className={`mobile-menu${isNavOpen ? " is-open" : ""}`}
+        aria-hidden={!isNavOpen}
+        inert={!isNavOpen}
+      >
+        <nav className="mm-nav" aria-label="Mobile">
+          <ul className="mm-list">
+            {sections.map((s, i) => (
+              <li key={s.id} className="mm-item">
+                <a
+                  href={`#${s.id}`}
+                  className={`mm-link${active === s.id ? " is-active" : ""}`}
+                  aria-current={active === s.id ? "location" : undefined}
+                  onClick={(e) => go(e, `#${s.id}`)}
+                >
+                  <span className="mm-index" aria-hidden="true">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="mm-label">{s.label}</span>
+                  <span className="mm-arrow" aria-hidden="true">
+                    →
+                  </span>
                 </a>
               </li>
-              <li className="nav-item">
-                <a className="nav-link pf-nav-link" href="#contact" onClick={closeNav}>
-                  Connect
+            ))}
+          </ul>
+        </nav>
+        <div className="mm-foot">
+          <p className="mm-tagline">
+            {profile.city} · {profile.role}
+          </p>
+          <ul className="mm-socials" aria-label="Social media links">
+            {socials.map((s) => (
+              <li key={s.label}>
+                <a
+                  className="orb-link"
+                  href={s.href}
+                  target={s.href.startsWith("mailto:") ? undefined : "_blank"}
+                  rel="noopener noreferrer"
+                  aria-label={s.label === "Email" ? "Send an email" : `Visit ${s.label} profile`}
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d={s.path} />
+                  </svg>
                 </a>
               </li>
-            </ul>
-          </nav>
+            ))}
+          </ul>
         </div>
       </div>
     </header>
-  )
+  );
 }

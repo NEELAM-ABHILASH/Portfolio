@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
+import { profile } from "../data/portfolio";
+import { onIntro, prefersReducedMotion } from "../lib/motion";
 
-const ROLE = "React Developer";
+const ROLE = profile.role;
 const TYPING_MS = 85;
 const PAUSE_MS = 3200;
 const DELETE_MS = 42;
 const LOOP_GAP_MS = 500;
+/**
+ * Starts once the hero text has finished dissolving and reassembling (~1.4s + ~3s).
+ * With motion off there is no dissolve, so it starts almost straight away.
+ */
+const START_AFTER_INTRO_MS = prefersReducedMotion() ? 400 : 4500;
 
 export function TypingRole() {
   const [displayed, setDisplayed] = useState("");
@@ -47,21 +54,22 @@ export function TypingRole() {
       }
     };
 
-    schedule(tick, 2200);
+    const off = onIntro(() => schedule(tick, START_AFTER_INTRO_MS));
     return () => {
       cancelled = true;
+      off();
       clearTimeout(timeoutId);
     };
   }, []);
 
   return (
-    <h2 className="role-heading mb-0" aria-live="polite">
-      <span className="visually-hidden">Role: </span>
-      <span className="role-prefix">I&apos;m a </span>
-      <span className="role-typed">{displayed}</span>
-      <span className="role-cursor" aria-hidden="true">
-        |
+    <p className="role-heading mb-0">
+      <span className="visually-hidden">Role: {ROLE}</span>
+      <span aria-hidden="true">
+        <span className="role-prefix">I&apos;m a </span>
+        <span className="role-typed">{displayed}</span>
+        <span className="role-cursor">|</span>
       </span>
-    </h2>
+    </p>
   );
 }

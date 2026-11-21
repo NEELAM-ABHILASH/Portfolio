@@ -1,73 +1,98 @@
-# React + TypeScript + Vite
+# Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio site built with **React 19 + TypeScript + Vite**, with a small **Node.js / Express + MongoDB** backend (in [`server/`](server/)) that handles the contact form.
 
-Currently, two official plugins are available:
+| Part     | Stack                         | Local URL               | Deployed on |
+| -------- | ----------------------------- | ----------------------- | ----------- |
+| Frontend | React, TypeScript, Vite       | http://localhost:9141   | Netlify     |
+| Backend  | Node.js, Express, Mongoose    | http://localhost:3001   | Render      |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Prerequisites
 
-## React Compiler
+- **Node.js** 20 or newer (check with `node -v`)
+- **npm** 10 or newer (check with `npm -v`)
+- A **MongoDB** connection string (e.g. a free MongoDB Atlas cluster) for the backend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 1. Install dependencies
 
-## Expanding the ESLint configuration
+The frontend and backend have separate `package.json` files, so install both:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+```bash
+# Frontend (project root)
+npm install
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Backend
+cd server
+npm install
+cd ..
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 2. Configure the backend
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Copy the example env file and fill in your values:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp server/.env.example server/.env
 ```
+
+| Variable        | Description                                             | Local value               |
+| --------------- | ------------------------------------------------------- | ------------------------- |
+| `MONGODB_URI`   | MongoDB connection string                               | your Atlas URI            |
+| `PORT`          | Port the API listens on (the Vite proxy expects `3001`) | `3001`                    |
+| `CLIENT_ORIGIN` | Allowed CORS origin                                     | `http://localhost:9141`   |
+| `DB_PASSWORD`   | Password for the admin view (`/api/admin/view`)         | any password you choose   |
+
+> Never commit `server/.env`.
+
+## 3. Run locally
+
+Run the backend and frontend in **two separate terminals**.
+
+**Terminal 1 — Node backend**
+
+```bash
+cd server
+npm run dev     # starts with nodemon (auto-restarts on file changes)
+# or
+npm start       # plain: node index.js
+```
+
+The API runs on http://localhost:3001.
+
+**Terminal 2 — Vite frontend**
+
+```bash
+npm run dev
+```
+
+Open http://localhost:9141. During development, Vite proxies every `/api/*` request to `http://localhost:3001` (see [`vite.config.ts`](vite.config.ts)), so the contact form talks to your local backend.
+
+## Available scripts
+
+### Frontend (project root)
+
+| Command           | What it does                                              |
+| ----------------- | --------------------------------------------------------- |
+| `npm run dev`     | Start the Vite dev server with hot reload on port 9141    |
+| `npm run build`   | Type-check (`tsc -b`) and build for production to `dist/` |
+| `npm run preview` | Serve the production build from `dist/` locally           |
+| `npm run lint`    | Run ESLint over the project                               |
+
+### Backend (`server/`)
+
+| Command       | What it does                                  |
+| ------------- | --------------------------------------------- |
+| `npm run dev` | Start the API with nodemon (auto-restart)     |
+| `npm start`   | Start the API with `node index.js`            |
+
+## Production build
+
+```bash
+npm run build     # outputs to dist/
+npm run preview   # check the build locally before deploying
+```
+
+## Deployment
+
+- **Frontend: Netlify.** [`netlify.toml`](netlify.toml) runs `npm run build`, publishes `dist/`, and forwards `/api/*` to the Render backend.
+- **Backend: Render.** [`render.yaml`](render.yaml) deploys the `server/` folder with `npm install` and `npm start`. Set `MONGODB_URI`, `CLIENT_ORIGIN` (your Netlify URL) and `DB_PASSWORD` in the Render dashboard.

@@ -1,5 +1,72 @@
 import { useState, useId, useEffect } from "react";
 import { AdminView } from "./AdminView";
+import { useGsap } from "../hooks/useGsap";
+import { gsap, MQ } from "../lib/motion";
+
+/** Presentation only: the card opens like a portal out of the page's depth. */
+function useContactMotion() {
+  return useGsap<HTMLElement>((_, root) => {
+    const mm = gsap.matchMedia();
+    mm.add(MQ.motion, () => {
+      const card = root.querySelector<HTMLElement>(".cf-card");
+      const rings = root.querySelectorAll<HTMLElement>(".cf-portal-ring");
+      gsap
+        .timeline({
+          scrollTrigger: {
+            trigger: root,
+            start: "top 75%",
+            toggleActions: "play none none reverse",
+          },
+        })
+        .fromTo(
+          rings,
+          { scale: 0, opacity: 0, rotation: -90 },
+          {
+            scale: 1,
+            opacity: 1,
+            rotation: 0,
+            duration: 1.4,
+            ease: "expo.out",
+            stagger: 0.12,
+          },
+        )
+        .fromTo(
+          card,
+          {
+            scale: 0.55,
+            z: -600,
+            rotationX: 35,
+            opacity: 0,
+            clipPath: "circle(0% at 50% 50%)",
+          },
+          {
+            scale: 1,
+            z: 0,
+            rotationX: 0,
+            opacity: 1,
+            clipPath: "circle(150% at 50% 50%)",
+            duration: 1.4,
+            ease: "expo.out",
+            clearProps: "clipPath,transform",
+          },
+          0.15,
+        )
+        .from(
+          root.querySelectorAll(".cf-header > *, .cf-field, .cf-actions"),
+          {
+            y: 34,
+            opacity: 0,
+            rotationX: -40,
+            duration: 0.8,
+            ease: "power3.out",
+            stagger: 0.05,
+          },
+          0.6,
+        );
+    });
+    return () => mm.revert();
+  });
+}
 
 interface FormState {
   name: string;
@@ -82,6 +149,7 @@ function validateForm(fields: FormState): FieldErrors {
 export function ContactForm() {
   const uid = useId();
   const id = (field: string) => `${uid}-${field}`;
+  const sectionRef = useContactMotion();
 
   const [adminOpen, setAdminOpen] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -176,300 +244,16 @@ export function ContactForm() {
   }
 
   return (
-    <section id="contact" className="cf-section intro-contact">
-      {/* — Left decoration: chat bubble with typing indicator — */}
-      <div className="cf-deco cf-deco--left" aria-hidden="true">
-        <div className="cf-deco-wrap">
-          <svg
-            viewBox="0 0 200 280"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Main speech bubble */}
-            <rect
-              x="15"
-              y="20"
-              width="170"
-              height="118"
-              rx="20"
-              fill="rgba(168,85,247,0.05)"
-              stroke="rgba(168,85,247,0.3)"
-              strokeWidth="1.5"
-            />
-            {/* Bubble tail */}
-            <path
-              d="M32 138 L18 168 L68 138Z"
-              fill="rgba(168,85,247,0.05)"
-              stroke="rgba(168,85,247,0.3)"
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-            {/* Inner horizontal rule */}
-            <line
-              x1="38"
-              y1="58"
-              x2="162"
-              y2="58"
-              stroke="rgba(168,85,247,0.15)"
-              strokeWidth="1"
-            />
-            {/* Typing dots */}
-            <circle
-              cx="67"
-              cy="85"
-              r="7"
-              fill="rgba(168,85,247,0.65)"
-              className="cf-typing-dot-1"
-            />
-            <circle
-              cx="100"
-              cy="85"
-              r="7"
-              fill="rgba(168,85,247,0.65)"
-              className="cf-typing-dot-2"
-            />
-            <circle
-              cx="133"
-              cy="85"
-              r="7"
-              fill="rgba(168,85,247,0.65)"
-              className="cf-typing-dot-3"
-            />
-            {/* Sparkle cross — top right */}
-            <line
-              x1="185"
-              y1="10"
-              x2="185"
-              y2="22"
-              stroke="rgba(168,85,247,0.7)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              className="cf-sp-1"
-            />
-            <line
-              x1="179"
-              y1="16"
-              x2="191"
-              y2="16"
-              stroke="rgba(168,85,247,0.7)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              className="cf-sp-1"
-            />
-            {/* Small dots — top left */}
-            <circle
-              cx="10"
-              cy="32"
-              r="2.5"
-              fill="rgba(168,85,247,0.4)"
-              className="cf-sp-2"
-            />
-            <circle
-              cx="4"
-              cy="52"
-              r="1.5"
-              fill="rgba(168,85,247,0.3)"
-              className="cf-sp-3"
-            />
-            {/* Sparkle cross — bottom left */}
-            <line
-              x1="8"
-              y1="188"
-              x2="8"
-              y2="198"
-              stroke="rgba(168,85,247,0.55)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              className="cf-sp-4"
-            />
-            <line
-              x1="3"
-              y1="193"
-              x2="13"
-              y2="193"
-              stroke="rgba(168,85,247,0.55)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              className="cf-sp-4"
-            />
-            {/* Accent dots */}
-            <circle
-              cx="192"
-              cy="82"
-              r="2.5"
-              fill="rgba(168,85,247,0.35)"
-              className="cf-sp-5"
-            />
-            <circle
-              cx="178"
-              cy="158"
-              r="2"
-              fill="rgba(168,85,247,0.25)"
-              className="cf-sp-2"
-            />
-            {/* Mini reply bubble */}
-            <rect
-              x="28"
-              y="200"
-              width="96"
-              height="44"
-              rx="13"
-              fill="rgba(168,85,247,0.04)"
-              stroke="rgba(168,85,247,0.2)"
-              strokeWidth="1"
-            />
-            <line
-              x1="46"
-              y1="218"
-              x2="106"
-              y2="218"
-              stroke="rgba(168,85,247,0.3)"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            <line
-              x1="46"
-              y1="228"
-              x2="84"
-              y2="228"
-              stroke="rgba(168,85,247,0.15)"
-              strokeWidth="1"
-              strokeLinecap="round"
-            />
-          </svg>
-        </div>
-      </div>
-
-      {/* — Right decoration: signal network — */}
-      <div className="cf-deco cf-deco--right" aria-hidden="true">
-        <div className="cf-deco-wrap">
-          <svg
-            viewBox="0 0 200 280"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {/* Concentric signal rings */}
-            <circle
-              cx="100"
-              cy="130"
-              r="88"
-              stroke="rgba(168,85,247,0.08)"
-              strokeWidth="1"
-              className="cf-ring-3"
-            />
-            <circle
-              cx="100"
-              cy="130"
-              r="62"
-              stroke="rgba(168,85,247,0.16)"
-              strokeWidth="1"
-              className="cf-ring-2"
-            />
-            <circle
-              cx="100"
-              cy="130"
-              r="38"
-              stroke="rgba(168,85,247,0.30)"
-              strokeWidth="1.5"
-              className="cf-ring-1"
-            />
-            {/* Center node */}
-            <circle
-              cx="100"
-              cy="130"
-              r="18"
-              fill="rgba(168,85,247,0.10)"
-              stroke="rgba(168,85,247,0.45)"
-              strokeWidth="1.5"
-            />
-            <circle cx="100" cy="130" r="8" fill="rgba(168,85,247,0.85)" />
-            {/* Satellite nodes at 120° intervals on the middle ring */}
-            <circle
-              cx="100"
-              cy="68"
-              r="6"
-              fill="rgba(168,85,247,0.5)"
-              stroke="rgba(168,85,247,0.4)"
-              strokeWidth="1"
-              className="cf-sat-1"
-            />
-            <circle
-              cx="154"
-              cy="161"
-              r="5"
-              fill="rgba(168,85,247,0.4)"
-              stroke="rgba(168,85,247,0.3)"
-              strokeWidth="1"
-              className="cf-sat-2"
-            />
-            <circle
-              cx="46"
-              cy="161"
-              r="5"
-              fill="rgba(168,85,247,0.4)"
-              stroke="rgba(168,85,247,0.3)"
-              strokeWidth="1"
-              className="cf-sat-3"
-            />
-            {/* Dashed connectors */}
-            <line
-              x1="100"
-              y1="122"
-              x2="100"
-              y2="74"
-              stroke="rgba(168,85,247,0.2)"
-              strokeWidth="1"
-              strokeDasharray="3 4"
-            />
-            <line
-              x1="107"
-              y1="138"
-              x2="149"
-              y2="156"
-              stroke="rgba(168,85,247,0.2)"
-              strokeWidth="1"
-              strokeDasharray="3 4"
-            />
-            <line
-              x1="93"
-              y1="138"
-              x2="51"
-              y2="156"
-              stroke="rgba(168,85,247,0.2)"
-              strokeWidth="1"
-              strokeDasharray="3 4"
-            />
-            {/* Floating accent dots */}
-            <circle
-              cx="170"
-              cy="38"
-              r="2.5"
-              fill="rgba(168,85,247,0.35)"
-              className="cf-fdot-1"
-            />
-            <circle
-              cx="24"
-              cy="72"
-              r="2"
-              fill="rgba(168,85,247,0.30)"
-              className="cf-fdot-2"
-            />
-            <circle
-              cx="182"
-              cy="205"
-              r="3"
-              fill="rgba(168,85,247,0.25)"
-              className="cf-fdot-3"
-            />
-            <circle
-              cx="14"
-              cy="192"
-              r="2"
-              fill="rgba(168,85,247,0.20)"
-              className="cf-fdot-4"
-            />
-          </svg>
-        </div>
+    <section
+      id="contact"
+      ref={sectionRef}
+      className="cf-section"
+      data-section="contact"
+    >
+      <div className="cf-portal" aria-hidden="true">
+        <span className="cf-portal-ring cf-portal-ring--a" />
+        <span className="cf-portal-ring cf-portal-ring--b" />
+        <span className="cf-portal-ring cf-portal-ring--c" />
       </div>
 
       <div className="pf-container">

@@ -1,13 +1,18 @@
-import { useId } from "react";
+import { useId, type MouseEvent } from "react";
 
-export function SignatureLogo() {
+export function SignatureLogo({
+  onClick,
+}: {
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
+}) {
   const ringGradId = `sig-ring-${useId().replace(/:/g, "")}`;
 
   return (
     <a
-      className="navbar-brand signature-brand mb-0"
+      className="signature-brand"
       href="#home"
       aria-label="Abhilash — Home"
+      onClick={onClick}
     >
       <span className="signature-brand-inner">
         <span className="signature-stack">
